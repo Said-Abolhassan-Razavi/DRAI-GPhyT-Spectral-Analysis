@@ -100,36 +100,22 @@ Relative L2 error of velocity at rollout step 10, averaged by test-cell type
 | dynamic-OOD | 0.66 | 0.71 | **0.59** |
 | joint-OOD | 0.58 | 0.70 | 0.58 |
 
-Zero-shot, GPhyT is no better than copying the last frame. Fine-tuning reduces the error by about 30%,
-also on test cells not seen during training.
+### Conclusions
 
-![rel l2 grid](figures/decay_gphyt-S/grid_rel_l2_step10.png)
+1. **Fine-tuning is needed.** Zero-shot, GPhyT is no better than copying the last frame. Fine-tuning
+   reduces the error by about 30%, also on test cells not seen during training.
+2. **Predictions are reliable only for a few steps.** In vorticity, the fine-tuned model is accurate at
+   step 1 (error 0.07), but **16×16 block artifacts** from GPhyT's patch tokenizer appear after ~5 steps
+   and dominate by step 10.
+3. **Too much high-frequency energy, not too little.** Large scales (k ≤ 4) are reproduced well, but both
+   models put 10–1000× too much energy at high wavenumbers (k > 10), growing with every rollout step.
+   This is the opposite of spectral smoothing.
+4. **Lower L2 error does not mean a better spectrum.** Fine-tuning lowers the L2 error but makes the
+   high-k excess worse.
+5. **Likely cause: the tokenizer.** The block artifacts match GPhyT's 16×16 patches, pointing to the
+   architecture rather than the physics (to be confirmed on other datasets).
 
-### Predicted fields
-
-Truth, pretrained, fine-tuned and absolute error (vorticity), medium IC, stride 3.
-The fine-tuned model is accurate at step 1 (error 0.07), but **16×16 block artifacts** from GPhyT's patch
-tokenizer appear after ~5 steps and dominate by step 10.
-
-![examples medium](figures/decay_gphyt-S/examples_medium_stride3_traj0.png)
-
-More: [complex IC, stride 4](figures/decay_gphyt-S/examples_complex_stride4_traj0.png).
-
-### Energy spectrum
-
-At step 10, large scales (k ≤ 4) are reproduced well, but both models put **too much** energy at high
-wavenumbers (k > 10). This is the opposite of spectral smoothing (losing high frequencies).
-
-![spectra](figures/decay_gphyt-S/spectra_train_cells_step10.png)
-
-The excess grows with every rollout step. Fine-tuning makes step 1 almost exact but the high-k excess
-builds up faster afterwards: **lower L2 error does not mean a better spectrum.**
-
-![spectral ratio](figures/decay_gphyt-S/spectral_ratio_vs_step.png)
-
-High-k energy ratio (predicted / true, log scale) on the full test grid:
-
-![high k grid](figures/decay_gphyt-S/grid_high_k_ratio_step10.png)
+All figures are in [figures/decay_gphyt-S/](figures/decay_gphyt-S/).
 
 ## Limitations and next steps
 
