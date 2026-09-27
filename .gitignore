@@ -1,0 +1,6 @@
+# data and large outputs
+*.npz
+*.pt
+*.pth
+__pycache__/
+*.pyc
