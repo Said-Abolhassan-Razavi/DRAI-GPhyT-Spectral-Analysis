@@ -19,7 +19,25 @@ import torch
 DRAI_DIR = Path(r"D:\Universtiy of Paris Saclay\M2 courses\DRAI")
 GPHYT_ROOT = DRAI_DIR / "General-Physics-Transformer-main" / "General-Physics-Transformer-main"
 DATA_DIR = DRAI_DIR / "General-Physics-Transformer-main"   # where the .npz files are
-RUNS_DIR = Path(__file__).resolve().parent / "runs"
+
+# Outputs (relative to the repository root)
+REPO_DIR = Path(__file__).resolve().parents[1]
+RUNS_DIR = REPO_DIR / "runs"          # checkpoints, raw results (not on GitHub)
+RESULTS_DIR = REPO_DIR / "results"    # csv tables
+FIGURES_DIR = REPO_DIR / "figures"    # png figures
+
+
+def run_name(dataset: str, size: str) -> str:
+    return f"{dataset}_gphyt-{size}"
+
+
+def out_dirs(dataset: str, size: str):
+    """(runs, results, figures) folders for one run, created if needed."""
+    name = run_name(dataset, size)
+    dirs = RUNS_DIR / name, RESULTS_DIR / name, FIGURES_DIR / name
+    for d in dirs:
+        d.mkdir(parents=True, exist_ok=True)
+    return dirs
 
 sys.path.insert(0, str(GPHYT_ROOT))
 from gphyt.models.transformer.model import get_model  # noqa: E402

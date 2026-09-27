@@ -41,7 +41,7 @@ def main():
     args = p.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    run_dir = C.RUNS_DIR / f"{args.dataset}_gphyt-{args.size}"
+    run_dir, _, fig_dir = C.out_dirs(args.dataset, args.size)
     L = C.DOMAIN_EXTENT[args.dataset]
 
     vel = C.load_split(args.dataset, "test", args.family, args.traj + 1)[args.traj:args.traj + 1]
@@ -83,7 +83,7 @@ def main():
     fig.colorbar(im_err, ax=axes[3, :].ravel().tolist(), shrink=0.8, label="abs. error")
     fig.suptitle(f"{args.dataset} test, {args.family} IC, stride {args.stride}, trajectory {args.traj}", fontsize=14)
 
-    out = run_dir / "eval" / f"examples_{args.family}_stride{args.stride}_traj{args.traj}.png"
+    out = fig_dir / f"examples_{args.family}_stride{args.stride}_traj{args.traj}.png"
     fig.savefig(out, dpi=110, bbox_inches="tight")
     print(f"saved {out}")
 

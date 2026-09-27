@@ -66,8 +66,7 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     torch.manual_seed(args.seed)
     rng = np.random.default_rng(args.seed)
-    run_dir = C.RUNS_DIR / f"{args.dataset}_gphyt-{args.size}"
-    run_dir.mkdir(parents=True, exist_ok=True)
+    run_dir, results_dir, _ = C.out_dirs(args.dataset, args.size)
 
     print("loading data ...")
     train = {f: C.load_split(args.dataset, "train", f) for f in C.TRAIN_FAMILIES}
@@ -86,7 +85,7 @@ def main():
     best = v["mean"]
     torch.save(model.state_dict(), run_dir / "best.pt")
 
-    log = open(run_dir / "log.csv", "w", newline="")
+    log = open(results_dir / "log.csv", "w", newline="")
     writer = csv.writer(log)
     writer.writerow(["step", "train_loss", "val_mean", *C.TRAIN_FAMILIES, "seconds"])
     writer.writerow([0, "", v["mean"], *[v[f] for f in C.TRAIN_FAMILIES], 0])

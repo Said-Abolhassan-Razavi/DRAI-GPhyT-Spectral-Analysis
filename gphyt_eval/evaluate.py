@@ -4,9 +4,9 @@ Evaluate GPhyT (pretrained zero-shot and fine-tuned) on the full 5x5 test grid
 
 For each cell: 4 context frames -> 15-step rollout (10 in-horizon + 5 OOD rollout).
 Saves:
-    runs/<dataset>_gphyt-<size>/eval/results.npz   rel. L2 and spectra for every cell/step
-    runs/<dataset>_gphyt-<size>/eval/summary.csv   one row per model x cell
-    runs/<dataset>_gphyt-<size>/eval/*.png         figures
+    runs/<dataset>_gphyt-<size>/results.npz      rel. L2 and spectra for every cell/step
+    results/<dataset>_gphyt-<size>/summary.csv   one row per model x cell
+    figures/<dataset>_gphyt-<size>/*.png         figures
 
 Usage:
     python evaluate.py --dataset decay
@@ -72,9 +72,7 @@ def main():
     args = p.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    run_dir = C.RUNS_DIR / f"{args.dataset}_gphyt-{args.size}"
-    out_dir = run_dir / "eval"
-    out_dir.mkdir(parents=True, exist_ok=True)
+    run_dir, results_dir, fig_dir = C.out_dirs(args.dataset, args.size)
 
     print("loading test data ...")
     test = {f: C.load_split(args.dataset, "test", f, args.max_traj) for f in C.FAMILIES}
@@ -103,7 +101,7 @@ def main():
                 save[f"{key}/rel_l2"] = l2
                 save[f"{key}/E_pred"] = Ep
                 save[f"{key}/E_true"] = Et
-    np.savez_compressed(out_dir / "results.npz", **save)
+    np.savez_compressed(run_dir / "results.npz", **save)
 
     # ---------------- summary table ----------------
     rows = []
@@ -120,7 +118,7 @@ def main():
                         row[f"{b}_ratio_step10"] = band_ratio(Ep[9], Et[9], b)
                 rows.append(row)
     keys = list(rows[-1].keys())
-    with open(out_dir / "summary.csv", "w", newline="") as fh:
+    with open(results_dir / "summary.csv", "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=keys)
         w.writeheader()
         for r in rows:
@@ -151,7 +149,7 @@ def main():
             fig.colorbar(im, ax=ax, label=label, shrink=0.8)
         fig.suptitle(f"{args.dataset}, GPhyT-{args.size}: {title} (bold = train-seen)")
         fig.tight_layout()
-        fig.savefig(out_dir / fname, dpi=120)
+        fig.savefig(fig_dir / fname, dpi=120)
         plt.close(fig)
 
     l2g = grid(lambda n, f, s: results[n][(f, s)][0][:, 9].mean())
@@ -175,7 +173,7 @@ def main():
         ax.set_xlabel("k"); ax.set_ylabel("E(k)")
         ax.legend()
     fig.tight_layout()
-    fig.savefig(out_dir / "spectra_train_cells_step10.png", dpi=120)
+    fig.savefig(fig_dir / "spectra_train_cells_step10.png", dpi=120)
     plt.close(fig)
 
     # spectral ratio vs k across the rollout (medium, stride 3), fine-tuned
@@ -190,7 +188,7 @@ def main():
         ax.set_xlabel("k")
         ax.legend()
     fig.tight_layout()
-    fig.savefig(out_dir / "spectral_ratio_vs_step.png", dpi=120)
+    fig.savefig(fig_dir / "spectral_ratio_vs_step.png", dpi=120)
     plt.close(fig)
 
     # ---------------- console summary ----------------
@@ -204,7 +202,7 @@ def main():
     for name in results:
         vals = [np.mean([r["high_ratio_step10"] for r in rows if r["model"] == name and r["cell"] == t]) for t in types]
         print(f"{name:<12}" + "".join(f"{v:>16.3f}" for v in vals))
-    print(f"\nsaved to {out_dir}")
+    print(f"\nsaved to {results_dir} and {fig_dir}")
 
 
 if __name__ == "__main__":
